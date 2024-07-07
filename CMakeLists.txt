@@ -5,30 +5,7 @@ set(FLAMESHOT_VERSION 12.1.0)
 
 # Flameshot-org
 set(GIT_API_URL "https://api.github.com/repos/flameshot-org/flameshot/releases/latest")
-# Namecheap
-# set(GIT_API_URL "https://api.github.com/repos/namecheap/flameshot/releases/latest")
 
-# TODO - fix it for all linux distros
-#find_package (Git)
-#if (GIT_FOUND)
-#  message("git found: ${GIT_EXECUTABLE} in version     ${GIT_VERSION_STRING}")
-#
-#  # set flameshot updates url
-#  execute_process(COMMAND ${GIT_EXECUTABLE} ls-remote --get-url OUTPUT_VARIABLE GIT_ORIGIN_REMOTE)
-#  message("GIT_ORIGIN_REMOTE: ${GIT_ORIGIN_REMOTE}")
-#  string(REGEX REPLACE ".git\r*\n*$" "/releases/latest" GIT_API_URL ${GIT_ORIGIN_REMOTE})
-#  string(REGEX REPLACE "^.*:" "https://api.github.com/repos/" GIT_API_URL ${GIT_API_URL})
-#  message("GIT_API_URL: '${GIT_API_URL}'")
-#
-#  # get application version
-#  execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0 --match v[0-9]* OUTPUT_VARIABLE FLAMESHOT_VERSION)
-#  string(REGEX REPLACE "\r" "" FLAMESHOT_VERSION ${FLAMESHOT_VERSION})
-#  string(REGEX REPLACE "\n" "" FLAMESHOT_VERSION ${FLAMESHOT_VERSION})
-#  string(REGEX REPLACE "^v" "" FLAMESHOT_VERSION ${FLAMESHOT_VERSION})
-#  message("FLAMESHOT_VERSION: '${FLAMESHOT_VERSION}'")
-#else()
-#  message("git command is not found")
-#endif ()
 
 project(
         flameshot
@@ -44,16 +21,8 @@ endif()
 
 # Configuration options
 set(DEFAULT_RUN_IN_PLACE FALSE)
-if(WIN32)
-  set(DEFAULT_RUN_IN_PLACE TRUE)
-  # For Windows RC file.
-  add_definitions(-DFLAMESHOT_VERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR})
-  add_definitions(-DFLAMESHOT_VERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR})
-  add_definitions(-DFLAMESHOT_VERSION_BUGFIX=${CMAKE_PROJECT_VERSION_PATCH})
-  add_definitions(-DFLAMESHOT_VERSION_BUILD=1)
-  add_definitions(-DFLAMESHOT_VERSION_STRING="${PROJECT_VERSION}")
-elseif(APPLE)
-  set(Qt5_DIR "$(brew --prefix qt5)/lib/cmake/Qt5/" CACHE PATH "directory where Qt5Config.cmake exists.")
+if(APPLE)
+  set(Qt5_DIR "$(brew --prefix qt@5)/lib/cmake/Qt5/" CACHE PATH "directory where Qt5Config.cmake exists.")
   set(CMAKE_MACOSX_BUNDLE ON)
   set(CMAKE_MACOSX_RPATH ON)
 endif()
@@ -111,7 +80,7 @@ endif()
 
 option(BUILD_STATIC_LIBS ON)
 option(BUILD_SHARED_LIBS OFF)
-add_subdirectory(external/Qt-Color-Widgets EXCLUDE_FROM_ALL) 
+add_subdirectory(external/Qt-Color-Widgets EXCLUDE_FROM_ALL)
 
 
 if (APPLE)

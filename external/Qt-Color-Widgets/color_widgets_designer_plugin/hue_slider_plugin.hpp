@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2013-2023 Mattia Basaglia
+ * SPDX-License-Identifier: LGPL-3.0-or-later
+ */
+
 #ifndef HUE_SLIDER_PLUGIN_HPP
 #define HUE_SLIDER_PLUGIN_HPP
 
@@ -9,7 +14,7 @@ class HueSlider_Plugin : public QObject, public QDesignerCustomWidgetInterface
     Q_INTERFACES(QDesignerCustomWidgetInterface)
 
 public:
-    HueSlider_Plugin(QObject *parent = 0);
+    HueSlider_Plugin(QObject *parent = nullptr);
 
     void initialize(QDesignerFormEditorInterface *core);
     bool isInitialized() const;

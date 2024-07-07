@@ -1,25 +1,11 @@
-/**
- * \file
+/*
+ * SPDX-FileCopyrightText: 2013-2023 Mattia Basaglia <dev@dragon.best>
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
+
 #include "QtColorWidgets/swatch.hpp"
+#include "QtColorWidgets/qt_compatibility.hpp"
 
 #include <cmath>
 #include <limits>
@@ -44,6 +30,7 @@ public:
     QSize        color_size; ///< Preferred size for the color squares
     ColorSizePolicy size_policy;
     QPen         border;
+    QPen         selected_pen{Qt::gray, 2, Qt::DotLine};
     int          forced_rows;
     int          forced_columns;
     bool         readonly;  ///< Whether the palette can be modified via user interaction
@@ -73,7 +60,12 @@ public:
           drop_overwrite(false),
           max_color_size(96, 128),
           owner(owner)
-    {}
+    {
+    	// Ensure rectangle with 90 degree edges - default Qt::BevelJoin causes
+    	// rounded / flatted rectangle
+    	border.setJoinStyle(Qt::MiterJoin);
+    	selected_pen.setJoinStyle(Qt::MiterJoin);
+    }
 
     /**
      * \brief Number of rows/columns in the palette
@@ -89,13 +81,37 @@ public:
             return QSize(std::ceil( float(count) / forced_rows ), forced_rows);
 
         int columns = palette.columns();
+        bool flexible_columns = false;
 
         if ( forced_columns )
+        {
             columns = forced_columns;
+        }
         else if ( columns == 0 )
-            columns = qMin(count, owner->width() / color_size.width());
+        {
+            columns = qMin(count, (owner->width() - border.width()) / color_size.width());
+            flexible_columns = true;
+        }
 
         int rows = std::ceil( float(count) / columns );
+
+        // Make nicer looking tables when we don't have many colors
+        if ( flexible_columns && rows < 4 )
+        {
+            int best_fit_rows = std::ceil(float(owner->height() - border.width()) / qMax(1, max_color_size.height()));
+            if ( rows < best_fit_rows )
+                rows = best_fit_rows;
+
+            columns = std::ceil( float(count) / rows );
+
+            // Avoid empty columns
+            int avail_width = owner->width() - border.width();
+            if ( columns * max_color_size.width() < avail_width )
+            {
+                columns = std::ceil(float(avail_width) / qMax(1, max_color_size.width()));
+                rows = std::ceil( float(count) / columns );
+            }
+        }
 
         return QSize(columns, rows);
     }
@@ -116,7 +132,7 @@ public:
     void dropEvent(QDropEvent* event)
     {
         // Find the output location
-        drop_index = indexAt(event->pos());
+        drop_index = indexAt(pos_wrap(event).toPoint());
         if ( drop_index == -1 )
             drop_index = palette.count();
 
@@ -139,20 +155,20 @@ public:
             if ( palette.columns() == 1 || forced_columns == 1 )
             {
                 // Dragged to the last quarter of the size of the square, add after
-                if ( event->posF().y() >= drop_rect.top() + drop_rect.height() * 3.0 / 4 )
+                if ( pos_wrap(event).y() >= drop_rect.top() + drop_rect.height() * 3.0 / 4 )
                     drop_index++;
                 // Dragged to the middle of the square, overwrite existing color
-                else if ( event->posF().x() > drop_rect.top() + drop_rect.height() / 4 &&
+                else if ( pos_wrap(event).x() > drop_rect.top() + drop_rect.height() / 4 &&
                         ( event->dropAction() != Qt::MoveAction || event->source() != owner ) )
                     drop_overwrite = true;
             }
             else
             {
                 // Dragged to the last quarter of the size of the square, add after
-                if ( event->posF().x() >= drop_rect.left() + drop_rect.width() * 3.0 / 4 )
+                if ( pos_wrap(event).x() >= drop_rect.left() + drop_rect.width() * 3.0 / 4 )
                     drop_index++;
                 // Dragged to the middle of the square, overwrite existing color
-                else if ( event->posF().x() > drop_rect.left() + drop_rect.width() / 4 &&
+                else if ( pos_wrap(event).x() > drop_rect.left() + drop_rect.width() / 4 &&
                         ( event->dropAction() != Qt::MoveAction || event->source() != owner ) )
                     drop_overwrite = true;
             }
@@ -191,8 +207,8 @@ public:
     QSizeF actualColorSize(const QSize& rowcols)
     {
         return QSizeF (
-            qMin(qreal(max_color_size.width()), qreal(owner->width()) / rowcols.width()),
-            qMin(qreal(max_color_size.height()), qreal(owner->height()) / rowcols.height())
+            qMin(qreal(max_color_size.width()), qreal(owner->width() - border.width()) / rowcols.width()),
+            qMin(qreal(max_color_size.height()), qreal(owner->height()  - border.width()) / rowcols.height())
         );
     }
 
@@ -208,8 +224,8 @@ public:
             return QRectF();
 
         return QRectF(
-            index % rowcols.width() * color_size.width(),
-            index / rowcols.width() * color_size.height(),
+            index % rowcols.width() * color_size.width() + border.width() / 2,
+            index / rowcols.width() * color_size.height() + border.width() / 2,
             color_size.width(),
             color_size.height()
         );
@@ -347,6 +363,21 @@ void Swatch::setSelected(int selected)
     update();
 }
 
+
+bool Swatch::setSelectedColor(const QColor& color)
+{
+	for (int i = 0; i < p->palette.count(); i++)
+	{
+		if (p->palette.colorAt(i) == color)
+		{
+			setSelected(i);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void Swatch::clearSelection()
 {
     setSelected(-1);
@@ -433,10 +464,10 @@ void Swatch::paintEvent(QPaintEvent* event)
     if ( p->selected != -1 )
     {
         QRectF rect = p->indexRect(p->selected, rowcols, color_size);
+        int offset = p->border.width() / 2;
+        rect.adjust(offset, offset, -offset, -offset);
         painter.setBrush(Qt::transparent);
-        painter.setPen(QPen(Qt::darkGray, 2));
-        painter.drawRect(rect);
-        painter.setPen(QPen(Qt::gray, 2, Qt::DotLine));
+        painter.setPen(p->selected_pen);
         painter.drawRect(rect);
     }
 }
@@ -831,7 +862,10 @@ bool Swatch::event(QEvent* event)
             QString message = color.name();
             if ( !name.isEmpty() )
                 message = tr("%1 (%2)").arg(name).arg(message);
-            message = "<tt style='background-color:"+color.name()+";color:"+color.name()+";'>MM</tt> "+message.toHtmlEscaped();
+            message = QStringLiteral("<tt style='background-color:%1;color:%2;'>MM</tt> %3")
+                          .arg(color.name())
+                          .arg(color.name())
+                          .arg(message.toHtmlEscaped());
             QToolTip::showText(help_ev->globalPos(), message, this,
                                p->indexRect(index).toRect());
             event->accept();
@@ -862,6 +896,23 @@ void Swatch::setBorder(const QPen& border)
     }
 }
 
+
+void Swatch::setSelectionPen(const QPen& selected)
+{
+    if ( selected != p->selected_pen )
+    {
+        p->selected_pen = selected;
+        update();
+    }
+}
+
+
+QPen Swatch::selectionPen() const
+{
+	return p->selected_pen;
+}
+
+
 bool Swatch::showClearColor() const
 {
     return p->show_clear_color;
@@ -875,5 +926,6 @@ void Swatch::setShowClearColor(bool show)
         update();
     }
 }
+
 
 } // namespace color_widgets

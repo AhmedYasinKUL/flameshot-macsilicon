@@ -98,40 +98,8 @@ add_subdirectory(tools)
 
 
 set(FLAMESHOT_TS_FILES
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_bg.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_ca.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_cs.ts
       ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_de_DE.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_el.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_es.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_eu.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_fa.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_fi.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_fr.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_gl.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_grc.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_he.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_hu.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_id.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_it_IT.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_ja.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_ka.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_ko.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_nb_NO.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_nl_NL.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_nl.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_pl.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_pt_BR.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_ru.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_sk.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_sr_SP.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_sv_SE.ts
       ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_tr.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_uk.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_vi.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_zh_CN.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_zh_HK.ts
-      ${CMAKE_SOURCE_DIR}/data/translations/Internationalization_zh_TW.ts
          )
 
 if (GENERATE_TS)
@@ -252,22 +220,6 @@ file(GLOB_RECURSE _source_list LIST_DIRECTORIES false
 #  will be organized according to the actual directory structure, .h.cpp is put together
 source_group(TREE ${_src_root_path} FILES ${_source_list})
 
-if (WIN32)
-    set(USE_OPENSSL FALSE)
-    if (ENABLE_OPENSSL)
-        find_package(OpenSSL)
-        if (OPENSSL_FOUND)
-            message(STATUS "OpenSSL support enabled.")
-            set(USE_OPENSSL TRUE)
-        endif ()
-    else ()
-        mark_as_advanced(CLEAR OPENSSL_LIBRARIES OPENSSL_INCLUDE_DIR)
-    endif ()
-
-    if (NOT USE_OPENSSL)
-        message(WARNING "OpenSSL is required to upload screenshots")
-    endif ()
-endif ()
 
 # Choose default color palette (small or large)
 if($ENV{FLAMESHOT_PREDEFINED_COLOR_PALETTE_LARGE})
@@ -383,54 +335,11 @@ if (UNIX)
     install(FILES ${QM_FILES} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/flameshot/translations)
 endif ()
 
-# windeployqt
-if (WIN32)
-    if (EXISTS $ENV{QTDIR}/bin/windeployqt.exe)
-        if (CMAKE_BUILD_TYPE MATCHES Release)
-            set(BINARIES_TYPE --release)
-        else ()
-            set(BINARIES_TYPE --debug)
-        endif ()
-
-        add_custom_command(
-                TARGET flameshot
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/windeployqt_stuff
-                COMMAND
-                $ENV{QTDIR}/bin/windeployqt.exe ${BINARIES_TYPE} --no-translations --compiler-runtime --no-system-d3d-compiler
-                --no-angle --no-webkit2 --no-quick-import --dir ${CMAKE_BINARY_DIR}/windeployqt_stuff $<TARGET_FILE:flameshot>
-                # copy translations manually QM_FILES
-                COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/windeployqt_stuff/translations
-                COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/src/translations
-                ${CMAKE_BINARY_DIR}/windeployqt_stuff/translations)
-
-        install(DIRECTORY ${CMAKE_BINARY_DIR}/windeployqt_stuff/ DESTINATION bin)
-
-
-        STRING(REGEX REPLACE "\\\\" "/" OPENSSL_ROOT_DIR "$ENV{OPENSSL_ROOT_DIR}" )
-
-        if (ENABLE_OPENSSL)
-            if (EXISTS ${OPENSSL_ROOT_DIR}/bin)
-
-                install(
-                        DIRECTORY ${OPENSSL_ROOT_DIR}/bin/
-                        DESTINATION bin
-                        FILES_MATCHING
-                        PATTERN "*.dll")
-            else ()
-                message(WARNING "Unable to find OpenSSL dlls.")
-            endif ()
-        endif ()
-
-    else ()
-        message("Unable to find executable QTDIR/bin/windeployqt.")
-    endif ()
-endif ()
 
 # macdeployqt
 if (APPLE)
     set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-    execute_process(COMMAND brew --prefix qt5 OUTPUT_VARIABLE QTDIR)
+    execute_process(COMMAND brew --prefix qt@5 OUTPUT_VARIABLE QTDIR)
     string(REGEX REPLACE "\n$" "" QTDIR "${QTDIR}")
     set(MAC_DEPLOY_QT ${QTDIR}/bin/macdeployqt)
     if (EXISTS ${MAC_DEPLOY_QT})

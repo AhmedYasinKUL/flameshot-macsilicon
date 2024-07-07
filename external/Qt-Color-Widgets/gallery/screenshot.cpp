@@ -1,23 +1,7 @@
-/**
- * \file
+/*
+ * SPDX-FileCopyrightText: 2013-2023 Mattia Basaglia
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
 #include <cstring>
 #include <algorithm>
@@ -49,8 +33,8 @@ void screenshot(QWidget& widget, QString name = QString())
 {
     if ( name.isEmpty() )
     {
-        name = widget.metaObject()->className();
-        name.remove("color_widgets::");
+        name = QString::fromLatin1(widget.metaObject()->className());
+        name.remove(QStringLiteral("color_widgets::"));
     }
     if ( !just_these.isEmpty() && !just_these.contains(name) )
         return;
@@ -58,7 +42,7 @@ void screenshot(QWidget& widget, QString name = QString())
     widget.setWindowTitle(name);
     QPixmap pic(widget.size());
     widget.render(&pic);
-    name += ".png";
+    name += QStringLiteral(".png");
     pic.save(name);
     if ( run )
         widget.show();
@@ -70,8 +54,8 @@ int main(int argc, char *argv[])
 
     QCommandLineParser parser;
     parser.addHelpOption();
-    parser.addPositionalArgument("just_these", "Only these widgets");
-    QCommandLineOption run_option("run", "Show widgets instead of saving to file");
+    parser.addPositionalArgument(QStringLiteral("just_these"), QStringLiteral("Only these widgets"));
+    QCommandLineOption run_option(QStringLiteral("run"), QStringLiteral("Show widgets instead of saving to file"));
     parser.addOption(run_option);
 
     parser.process(a);
@@ -84,9 +68,9 @@ int main(int argc, char *argv[])
     color_widgets::ColorPalette palette2;
     color_widgets::ColorPalette palette3;
     int palette_columns = 12;
-    palette1.setName("Palette 1");
-    palette2.setName("Palette 2");
-    palette3.setName("Palette 3");
+    palette1.setName(QStringLiteral("Palette 1"));
+    palette2.setName(QStringLiteral("Palette 2"));
+    palette3.setName(QStringLiteral("Palette 3"));
     palette1.setColumns(palette_columns);
     palette2.setColumns(palette_columns);
     for ( int i = 0; i < 6; i++ )
@@ -128,7 +112,7 @@ int main(int argc, char *argv[])
     line_edit.resize(line_edit.sizeHint());
     screenshot(line_edit);
     line_edit.setPreviewColor(true);
-    screenshot(line_edit, "ColorLineEdit_with_color");
+    screenshot(line_edit, QStringLiteral("ColorLineEdit_with_color"));
 
     color_widgets::ColorWheel wheel;
     wheel.resize(256, 256);
@@ -154,7 +138,7 @@ int main(int argc, char *argv[])
     color_widgets::ColorPaletteWidget palette_widget1;
     palette_widget1.setModel(&palette_model);
     palette_widget1.setReadOnly(true);
-    screenshot(palette_widget1, "ColorPaletteWidget_readonly");
+    screenshot(palette_widget1, QStringLiteral("ColorPaletteWidget_readonly"));
 
     color_widgets::HueSlider hue_slider;
     hue_slider.setColor(demo_color);
@@ -184,15 +168,15 @@ int main(int argc, char *argv[])
 
     QComboBox gradient_list;
     color_widgets::GradientListModel gradient_model;
-    gradient_model.setGradient("Rainbow", gradient_colors);
-    gradient_model.setGradient("Black to Transparent", QGradientStops{{0, Qt::black}, {1, QColor(0, 0, 0, 0)}});
+    gradient_model.setGradient(QStringLiteral("Rainbow"), gradient_colors);
+    gradient_model.setGradient(QStringLiteral("Black to Transparent"), QGradientStops{{0, Qt::black}, {1, QColor(0, 0, 0, 0)}});
     gradient_list.setModel(&gradient_model);
     gradient_model.setIconSize(QSize(128, 24));
     gradient_list.setIconSize(gradient_model.iconSize());
     QObject::connect(&editor, &color_widgets::GradientEditor::stopsChanged, &gradient_model,
-            [&gradient_model](const QGradientStops& stops){ gradient_model.setGradient("Rainbow", stops); });
+            [&gradient_model](const QGradientStops& stops){ gradient_model.setGradient(QStringLiteral("Rainbow"), stops); });
     gradient_list.resize(gradient_list.sizeHint());
-    screenshot(gradient_list, "GradientListModel_combo");
+    screenshot(gradient_list, QStringLiteral("GradientListModel_combo"));
 
     QListView gradient_view;
     color_widgets::GradientDelegate gradient_delegate;
@@ -201,7 +185,7 @@ int main(int argc, char *argv[])
 //     gradient_model.setEditMode(color_widgets::GradientListModel::EditName);
     gradient_model.setEditMode(color_widgets::GradientListModel::EditGradient);
     gradient_view.resize(QSize(gradient_view.sizeHintForColumn(0) + 4, gradient_view.sizeHint().height()));
-    screenshot(gradient_view, "GradientListModel_view");
+    screenshot(gradient_view, QStringLiteral("GradientListModel_view"));
 
     QTableWidget gradient_table;
     gradient_table.setItemDelegate(&gradient_delegate);
@@ -213,7 +197,7 @@ int main(int argc, char *argv[])
     gradient_table.setItem(1, 0, new QTableWidgetItem());
     gradient_table.item(1, 0)->setData(Qt::EditRole, QVariant::fromValue(gradient_model.gradientBrush(1)));
     gradient_table.setItem(1, 1, new QTableWidgetItem(gradient_model.nameFromIndex(1)));
-    screenshot(gradient_table, "GradientDelegate_table");
+    screenshot(gradient_table, QStringLiteral("GradientDelegate_table"));
 
     if ( run )
         return a.exec();

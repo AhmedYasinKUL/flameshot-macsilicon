@@ -1,24 +1,9 @@
-/**
- * \file
+/*
+ * SPDX-FileCopyrightText: 2013-2020 Mattia Basaglia
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
+
 #include "color_line_edit_plugin.hpp"
 #include "QtColorWidgets/color_line_edit.hpp"
 
@@ -30,15 +15,15 @@ QWidget* ColorLineEdit_Plugin::createWidget(QWidget *parent)
 
 QIcon ColorLineEdit_Plugin::icon() const
 {
-    return QIcon::fromTheme("edit-rename");
+    return QIcon::fromTheme(QStringLiteral("edit-rename"));
 }
 
 QString ColorLineEdit_Plugin::domXml() const
 {
-    return "<ui language=\"c++\">\n"
-           " <widget class=\"color_widgets::ColorLineEdit\" name=\"color_line_edit\">\n"
-           " </widget>\n"
-           "</ui>\n";
+    return QStringLiteral("<ui language=\"c++\">\n"
+                          " <widget class=\"color_widgets::ColorLineEdit\" name=\"color_line_edit\">\n"
+                          " </widget>\n"
+                          "</ui>\n");
 }
 
 bool ColorLineEdit_Plugin::isContainer() const
@@ -63,17 +48,17 @@ bool ColorLineEdit_Plugin::isInitialized() const
 
 QString ColorLineEdit_Plugin::name() const
 {
-    return "color_widgets::ColorLineEdit";
+    return QStringLiteral("color_widgets::ColorLineEdit");
 }
 
 QString ColorLineEdit_Plugin::group() const
 {
-    return "Color Widgets";
+    return QStringLiteral("Color Widgets");
 }
 
 QString ColorLineEdit_Plugin::toolTip() const
 {
-    return "A widget to manipulate a string representing a color";
+    return QStringLiteral("A widget to manipulate a string representing a color");
 }
 
 QString ColorLineEdit_Plugin::whatsThis() const
@@ -83,5 +68,5 @@ QString ColorLineEdit_Plugin::whatsThis() const
 
 QString ColorLineEdit_Plugin::includeFile() const
 {
-    return "QtColorWidgets/color_line_edit.hpp";
+    return QStringLiteral("QtColorWidgets/color_line_edit.hpp");
 }

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2013-2023 Mattia Basaglia
+ * SPDX-License-Identifier: LGPL-3.0-or-later
+ */
+
 #ifndef QT_COLOR_WIDGETS_GLOBAL_H
 #define QT_COLOR_WIDGETS_GLOBAL_H
 

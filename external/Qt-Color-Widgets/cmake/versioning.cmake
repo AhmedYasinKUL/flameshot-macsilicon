@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2013-2023 Mattia Basaglia <dev@dragon.best>
+# SPDX-License-Identifier: BSD-2-Clause
 include (ProjectVersioning)
 
 function (generate_versioning_information

@@ -1,32 +1,19 @@
-/**
- * \file
+/*
+ * SPDX-FileCopyrightText: 2013-2020 Mattia Basaglia
+ * SPDX-FileCopyrightText: 2017 caryoscelus
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- * \copyright Copyright (C) 2017 caryoscelus
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
 
 #include "QtColorWidgets/color_wheel.hpp"
 #include "QtColorWidgets/color_utils.hpp"
+#include "QtColorWidgets/qt_compatibility.hpp"
 
 #include <QPainter>
 #include <QPainterPath>
 #include <QMouseEvent>
+
+
 
 namespace color_widgets {
 
@@ -53,9 +40,11 @@ public:
     ColorSpaceEnum color_space = ColorHSV;
     bool rotating_selector = true;
     ShapeEnum selector_shape = ShapeTriangle;
-    QColor (*color_from)(qreal,qreal,qreal,qreal);
+    QColor (*color_from)(qt_color_type,qt_color_type,qt_color_type,qt_color_type);
     QColor (*rainbow_from_hue)(qreal);
     int max_size = 128;
+    bool mirrored_selector = false;
+    qreal device_pixel_ratio = 1.0;
 
     Private(ColorWheel *widget)
         : w(widget), hue(0), sat(0), val(0),
@@ -72,7 +61,7 @@ public:
 
     virtual ~Private(){}
 
-    /// Calculate outer wheel radius from idget center
+    /// Calculate outer wheel radius from Widget center
     qreal outer_radius() const
     {
         return qMin(w->geometry().width(), w->geometry().height())/2;
@@ -128,7 +117,7 @@ public:
 
     void render_square()
     {
-        int width = qMin<int>(square_size(), max_size);
+        int width = qMin<int>(square_size(), max_size) * device_pixel_ratio;
         init_buffer(QSize(width, width));
 
         for ( int y = 0; y < width; ++y )
@@ -150,6 +139,7 @@ public:
         QSizeF size = selector_size();
         if ( size.height() > max_size )
             size *= max_size / size.height();
+        size *= device_pixel_ratio;
 
         qreal ycenter = size.height()/2;
 
@@ -204,22 +194,32 @@ public:
         if ( selector_shape == ShapeTriangle )
         {
             if ( rotating_selector )
-                return -hue*360-60;
+            {
+                if ( mirrored_selector )
+                    return hue*360+120;
+                else
+                    return -hue*360-60;
+            }
             return -150;
         }
         else
         {
             if ( rotating_selector )
-                return -hue*360-45;
-            else
-                return 180;
+            {
+                if ( mirrored_selector )
+                    return hue*360+135;
+                else
+                    return -hue*360-45;
+            }
+            return 180;
         }
     }
 
     /// Updates the outer ring that displays the hue selector
     void render_ring()
     {
-        hue_ring = QPixmap(outer_radius()*2,outer_radius()*2);
+        qreal outer = outer_radius() * device_pixel_ratio;
+        hue_ring = QPixmap(outer*2,outer*2);
         hue_ring.fill(Qt::transparent);
         QPainter painter(&hue_ring);
         painter.setRenderHint(QPainter::Antialiasing);
@@ -237,14 +237,15 @@ public:
             gradient_hue.setColorAt(1,rainbow_from_hue(0));
         }
 
-        painter.translate(outer_radius(),outer_radius());
+        painter.translate(outer,outer);
 
         painter.setPen(Qt::NoPen);
         painter.setBrush(QBrush(gradient_hue));
-        painter.drawEllipse(QPointF(0,0),outer_radius(),outer_radius());
+        painter.drawEllipse(QPointF(0,0),outer,outer);
 
         painter.setBrush(Qt::transparent);//palette().background());
-        painter.drawEllipse(QPointF(0,0),inner_radius(),inner_radius());
+        qreal inner = inner_radius() * device_pixel_ratio;
+        painter.drawEllipse(QPointF(0,0),inner, inner);
     }
 
     void set_color(const QColor& c)

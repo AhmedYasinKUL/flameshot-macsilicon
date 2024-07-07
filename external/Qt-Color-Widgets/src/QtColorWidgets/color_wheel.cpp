@@ -1,24 +1,9 @@
-/**
- * \file
+/*
+ * SPDX-FileCopyrightText: 2013-2020 Mattia Basaglia
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
+
 #include "QtColorWidgets/color_wheel.hpp"
 #include "QtColorWidgets/color_wheel_private.hpp"
 
@@ -95,6 +80,13 @@ void ColorWheel::setWheelWidth(unsigned int w)
 
 void ColorWheel::paintEvent(QPaintEvent * )
 {
+    qreal dpr = devicePixelRatioF();
+    if(p->device_pixel_ratio != dpr) {
+        p->device_pixel_ratio = dpr;
+        p->hue_ring = QPixmap();
+        p->inner_selector = QImage();
+    }
+
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     painter.translate(geometry().width()/2,geometry().height()/2);
@@ -103,7 +95,8 @@ void ColorWheel::paintEvent(QPaintEvent * )
     if(p->hue_ring.isNull())
         p->render_ring();
 
-    painter.drawPixmap(-p->outer_radius(), -p->outer_radius(), p->hue_ring);
+    qreal outer = p->outer_radius();
+    painter.drawPixmap(QRect(-outer, -outer, outer * 2.0, outer * 2.0), p->hue_ring);
 
     // hue selector
     p->draw_ring_editor(p->hue, painter, Qt::black);
@@ -112,6 +105,8 @@ void ColorWheel::paintEvent(QPaintEvent * )
     if(p->inner_selector.isNull())
         p->render_inner_selector();
 
+    if ( p->mirrored_selector )
+        painter.scale(-1.0, 1.0);
     painter.rotate(p->selector_image_angle());
     painter.translate(p->selector_image_offset());
 
@@ -142,7 +137,7 @@ void ColorWheel::paintEvent(QPaintEvent * )
     painter.setClipping(false);
 
     // lum-sat selector
-    // we define the color of the selecto based on the background color of the widget
+    // we define the color of the selection based on the background color of the widget
     // in order to improve to contrast
     if (p->backgroundIsDark)
     {
@@ -173,8 +168,14 @@ void ColorWheel::mouseMoveEvent(QMouseEvent *ev)
     else if(p->mouse_status == DragSquare)
     {
         QLineF glob_mouse_ln = p->line_to_point(ev->pos());
-        QLineF center_mouse_ln ( QPointF(0,0),
-                                 glob_mouse_ln.p2() - glob_mouse_ln.p1() );
+        QLineF center_mouse_ln (
+            QPointF(0,0),
+            QPointF(
+                p->mirrored_selector ? glob_mouse_ln.x1() - glob_mouse_ln.x2()
+                                     : glob_mouse_ln.x2() - glob_mouse_ln.x1(),
+                glob_mouse_ln.y2() - glob_mouse_ln.y1()
+            )
+        );
 
         center_mouse_ln.setAngle(center_mouse_ln.angle()+p->selector_image_angle());
         center_mouse_ln.setP2(center_mouse_ln.p2()-p->selector_image_offset());
@@ -231,11 +232,7 @@ void ColorWheel::mouseReleaseEvent(QMouseEvent *ev)
 
 void ColorWheel::resizeEvent(QResizeEvent *)
 {
-    static bool skipFirst = true;
-    // Skip the first time in order to prevent QPainter warning messages
-    if (!skipFirst)
-        p->render_ring();
-    skipFirst = false;
+    p->render_ring();
     p->render_inner_selector();
 }
 
@@ -283,6 +280,11 @@ color_widgets::ColorWheel::ShapeEnum ColorWheel::selectorShape() const
     return p->selector_shape;
 }
 
+bool ColorWheel::mirroredSelector() const
+{
+    return p->mirrored_selector;
+}
+
 
 void ColorWheel::setColorSpace(color_widgets::ColorWheel::ColorSpaceEnum space)
 {
@@ -295,21 +297,18 @@ void ColorWheel::setColorSpace(color_widgets::ColorWheel::ColorSpaceEnum space)
         switch ( space )
         {
             case ColorHSL:
-                p->hue = old_col.hueF();
                 p->sat = utils::color_HSL_saturationF(old_col);
                 p->val = utils::color_lightnessF(old_col);
                 p->color_from = &utils::color_from_hsl;
                 p->rainbow_from_hue = &utils::rainbow_hsv;
                 break;
             case ColorHSV:
-                p->hue = old_col.hsvHueF();
                 p->sat = old_col.hsvSaturationF();
                 p->val = old_col.valueF();
                 p->color_from = &QColor::fromHsvF;
                 p->rainbow_from_hue = &utils::rainbow_hsv;
                 break;
             case ColorLCH:
-                p->hue = old_col.hueF();
                 p->sat = utils::color_chromaF(old_col);
                 p->val = utils::color_lumaF(old_col);
                 p->color_from = &utils::color_from_lch;
@@ -339,6 +338,16 @@ void ColorWheel::setSelectorShape(color_widgets::ColorWheel::ShapeEnum shape)
         update();
         p->render_inner_selector();
         Q_EMIT selectorShapeChanged(shape);
+    }
+}
+
+void ColorWheel::setMirroredSelector(bool mirrored)
+{
+    if ( mirrored != p->mirrored_selector )
+    {
+        p->mirrored_selector = mirrored;
+        update();
+        Q_EMIT mirroredSelectorChanged(mirrored);
     }
 }
 

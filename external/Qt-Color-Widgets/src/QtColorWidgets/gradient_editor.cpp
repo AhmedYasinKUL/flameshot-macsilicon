@@ -1,25 +1,11 @@
-/**
- * \file gradient_editor.cpp
+/*
+ * SPDX-FileCopyrightText: 2013-2020 Mattia Basaglia
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
+
 #include "QtColorWidgets/gradient_editor.hpp"
+#include "QtColorWidgets/qt_compatibility.hpp"
 
 #include <QPainter>
 #include <QStyleOptionSlider>
@@ -107,8 +93,8 @@ public:
 
     void drop_event(QDropEvent* event, GradientEditor* owner)
     {
-        drop_index = closest(event->pos(), owner);
-        drop_pos = move_pos(event->pos(), owner);
+        drop_index = closest(pos_wrap(event).toPoint(), owner);
+        drop_pos = move_pos(pos_wrap(event).toPoint(), owner);
         if ( drop_index == -1 )
             drop_index = stops.size();
 
@@ -264,7 +250,7 @@ void GradientEditor::mousePressEvent(QMouseEvent *ev)
     {
         ev->accept();
         p->selected = p->highlighted = p->closest(ev->pos(), this);
-        emit selectedStopChanged(p->selected);
+        Q_EMIT selectedStopChanged(p->selected);
         update();
     }
     else
@@ -309,7 +295,7 @@ void GradientEditor::mouseReleaseEvent(QMouseEvent *ev)
     {
         ev->accept();
         QRect bound_rect = rect();
-        QPoint localpt = ev->localPos().toPoint();
+        QPoint localpt = pos_wrap(ev).toPoint();
         const int w_margin = 24;
         const int h_margin = 8;
         bool x_out = localpt.x() < -w_margin || localpt.x() > bound_rect.width() + w_margin;
@@ -332,7 +318,7 @@ void GradientEditor::mouseReleaseEvent(QMouseEvent *ev)
     else if ( ev->button() == Qt::RightButton )
     {
         QMenu menu(this);
-        menu.addAction(QIcon::fromTheme("list-add"), tr("Add Color"), this, [this, ev]{
+        menu.addAction(QIcon::fromTheme(QStringLiteral("list-add")), tr("Add Color"), this, [this, ev]{
             p->add_color_mouse(ev, this);
             Q_EMIT selectedStopChanged(p->selected);
             Q_EMIT stopsChanged(p->stops);
@@ -341,7 +327,7 @@ void GradientEditor::mouseReleaseEvent(QMouseEvent *ev)
         if ( p->highlighted != -1 )
         {
             int h = p->highlighted; // leaveEvent resets it when showing the menu
-            menu.addAction(QIcon::fromTheme("list-remove"), tr("Remove Color"), this, [this, h]{
+            menu.addAction(QIcon::fromTheme(QStringLiteral("list-remove")), tr("Remove Color"), this, [this, h]{
                 p->stops.remove(h);
                 p->highlighted = -1;
                 p->refresh_gradient();
@@ -349,13 +335,16 @@ void GradientEditor::mouseReleaseEvent(QMouseEvent *ev)
                 Q_EMIT stopsChanged(p->stops);
                 update();
             });
-            menu.addAction(QIcon::fromTheme("document-edit"), tr("Edit Color..."), this, [this, h]{
+            menu.addAction(QIcon::fromTheme(QStringLiteral("document-edit")), tr("Edit Color..."), this, [this, h]{
                 p->highlighted = h;
                 p->show_dialog_highlighted();
             });
         }
-
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        menu.exec(ev->globalPosition().toPoint());
+#else
         menu.exec(ev->globalPos());
+#endif
     }
     else
     {
@@ -392,8 +381,8 @@ void GradientEditor::setStops(const QGradientStops &colors)
     p->selected = p->highlighted = p->dialog_selected = -1;
     p->stops = colors;
     p->refresh_gradient();
-    emit selectedStopChanged(p->selected);
-    emit stopsChanged(p->stops);
+    Q_EMIT selectedStopChanged(p->selected);
+    Q_EMIT stopsChanged(p->stops);
     update();
 }
 
@@ -503,8 +492,7 @@ QSize GradientEditor::sizeHint() const
         std::swap(w, h);
     }
     QSlider s;
-    return style()->sizeFromContents(QStyle::CT_Slider, &opt, QSize(w, h), &s)
-        .expandedTo(QApplication::globalStrut());
+    return style()->sizeFromContents(QStyle::CT_Slider, &opt, QSize(w, h), &s);
 }
 
 int GradientEditor::selectedStop() const
@@ -517,7 +505,7 @@ void GradientEditor::setSelectedStop(int stop)
     if ( stop >= -1 && stop < p->stops.size() )
     {
         p->selected = stop;
-        emit selectedStopChanged(p->selected);
+        Q_EMIT selectedStopChanged(p->selected);
     }
 }
 
@@ -572,7 +560,7 @@ void GradientEditor::dropEvent(QDropEvent *event)
     p->selected = p->drop_index;
     event->accept();
     p->clear_drop(this);
-    emit selectedStopChanged(p->selected);
+    Q_EMIT selectedStopChanged(p->selected);
 }
 
 void GradientEditor::addStop()
@@ -585,7 +573,7 @@ void GradientEditor::addStop()
     p->selected = p->highlighted = index;
     p->refresh_gradient();
     update();
-    emit selectedStopChanged(p->selected);
+    Q_EMIT selectedStopChanged(p->selected);
 }
 
 void GradientEditor::removeStop()
@@ -602,7 +590,7 @@ void GradientEditor::removeStop()
     if ( p->selected != -1 )
     {
         p->selected = -1;
-        emit selectedStopChanged(p->selected);
+        Q_EMIT selectedStopChanged(p->selected);
     }
 
     p->dialog_selected = -1;

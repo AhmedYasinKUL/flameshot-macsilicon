@@ -1,25 +1,10 @@
-/**
- * \file
+/*
+ * SPDX-FileCopyrightText: 2013-2020 Mattia Basaglia
+ * SPDX-FileCopyrightText: 2014 Calle Laakkonen
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- * \copyright Copyright (C) 2014 Calle Laakkonen
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
+
 #include "QtColorWidgets/color_dialog.hpp"
 #include "ui_color_dialog.h"
 
@@ -31,7 +16,6 @@
 
 #include "QtColorWidgets/color_utils.hpp"
 
-#include <QDebug>
 namespace color_widgets {
 
 class ColorDialog::Private
@@ -85,6 +69,7 @@ ColorDialog::ColorDialog(QWidget *parent, Qt::WindowFlags f) :
     connect(p->ui.wheel, &ColorWheel::colorSpaceChanged, this, &ColorDialog::colorSpaceChanged);
     connect(p->ui.wheel, &ColorWheel::selectorShapeChanged, this, &ColorDialog::wheelShapeChanged);
     connect(p->ui.wheel, &ColorWheel::rotatingSelectorChanged, this, &ColorDialog::wheelRotatingChanged);
+    connect(p->ui.wheel, &ColorWheel::mirroredSelectorChanged, this, &ColorDialog::wheelMirroredChanged);
 
 }
 
@@ -179,7 +164,7 @@ void ColorDialog::setColorInternal(const QColor &col)
 
     bool blocked = signalsBlocked();
     blockSignals(true);
-    Q_FOREACH(QWidget* w, findChildren<QWidget*>())
+    for(QWidget *w: findChildren<QWidget*>())
         w->blockSignals(true);
 
 
@@ -228,7 +213,7 @@ void ColorDialog::setColorInternal(const QColor &col)
     p->ui.preview->setColor(col);
 
     blockSignals(blocked);
-    Q_FOREACH(QWidget* w, findChildren<QWidget*>())
+    for(QWidget *w: findChildren<QWidget*>())
         w->blockSignals(false);
 
     Q_EMIT colorChanged(col);
@@ -344,7 +329,12 @@ void ColorDialog::mouseReleaseEvent(QMouseEvent *event)
 {
     if (p->pick_from_screen)
     {
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        setColorInternal(utils::get_screen_color(event->globalPosition().toPoint()));
+#else
         setColorInternal(utils::get_screen_color(event->globalPos()));
+#endif
         p->pick_from_screen = false;
         releaseMouse();
     }
@@ -354,7 +344,12 @@ void ColorDialog::mouseMoveEvent(QMouseEvent *event)
 {
     if (p->pick_from_screen)
     {
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        setColorInternal(utils::get_screen_color(event->globalPosition().toPoint()));
+#else
         setColorInternal(utils::get_screen_color(event->globalPos()));
+#endif
     }
 }
 
@@ -399,6 +394,16 @@ void ColorDialog::setWheelRotating(bool rotating)
 bool ColorDialog::wheelRotating() const
 {
     return p->ui.wheel->rotatingSelector();
+}
+
+void ColorDialog::setWheelMirrored(bool mirrored)
+{
+    p->ui.wheel->setMirroredSelector(mirrored);
+}
+
+bool ColorDialog::wheelMirrored() const
+{
+    return p->ui.wheel->mirroredSelector();
 }
 
 int ColorDialog::exec()

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2013-2023 Mattia Basaglia
+ * SPDX-License-Identifier: LGPL-3.0-or-later
+ */
+
 #ifndef GRADIENT_SLIDER_PLUGIN_HPP
 #define GRADIENT_SLIDER_PLUGIN_HPP
 
@@ -9,7 +14,7 @@ class GradientSlider_Plugin : public QObject, public QDesignerCustomWidgetInterf
     Q_INTERFACES(QDesignerCustomWidgetInterface)
 
 public:
-    GradientSlider_Plugin(QObject *parent = 0);
+    GradientSlider_Plugin(QObject *parent = nullptr);
 
     void initialize(QDesignerFormEditorInterface *core);
     bool isInitialized() const;

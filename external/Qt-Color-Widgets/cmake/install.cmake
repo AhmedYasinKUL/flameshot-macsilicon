@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2013-2023 Mattia Basaglia <dev@dragon.best>
+# SPDX-License-Identifier: BSD-2-Clause
+
 function (install_project
     PROJECT_NAME i_project_name
 	TARGET_NAME i_target_name
@@ -7,30 +10,33 @@ function (install_project
     HEADER_MATCHING_REGEX i_header_matching_regex
     VERSION_HEADER i_version_header
     NAMESPACE i_namespace)
+
+  include(GNUInstallDirs)
+
   install (TARGETS ${i_target_name}
     EXPORT ${i_target_name}
-    RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib)
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
   install (DIRECTORY include/
-    DESTINATION include
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILES_MATCHING
     REGEX ${i_header_matching_regex}
     REGEX "CMakeLists\.txt" EXCLUDE)
 
   install (FILES ${i_version_header}
-    DESTINATION include/${i_include_prefix}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${i_include_prefix}
     COMPONENT Devel)
 
   install (FILES include/${i_export_header}
-    DESTINATION include/${i_include_prefix}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${i_include_prefix}
     COMPONENT Devel)
 
   install(
     EXPORT ${i_target_name}
-    DESTINATION lib/cmake/${i_target_name}${i_target_output_suffix}
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${i_target_name}${i_target_output_suffix}
     FILE "${i_target_name}${i_target_output_suffix}.cmake"
     COMPONENT Devel)
 
@@ -55,7 +61,7 @@ function (install_project
     @ONLY
     )
 
-  set(ConfigPackageLocation "lib/cmake/${i_target_name}${i_target_output_suffix}")
+  set(ConfigPackageLocation "${CMAKE_INSTALL_LIBDIR}/cmake/${i_target_name}${i_target_output_suffix}")
   install(EXPORT ${i_target_name}
     FILE
     "${CMAKE_BASE_FILE_NAME}${CMAKE_FILE_OUTPUT_SUFFIX}-targets.cmake"
@@ -83,6 +89,6 @@ function (install_project
   install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${i_target_name}${i_target_output_suffix}.pc
     DESTINATION
-    lib/pkgconfig
+    ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     )
 endfunction (install_project)

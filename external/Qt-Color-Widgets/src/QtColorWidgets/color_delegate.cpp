@@ -1,31 +1,15 @@
-/**
- * \file
+/*
+ * SPDX-FileCopyrightText: 2013-2020 Mattia Basaglia
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
+
 #include "QtColorWidgets/color_delegate.hpp"
 #include "QtColorWidgets/color_selector.hpp"
 #include "QtColorWidgets/color_dialog.hpp"
 #include <QPainter>
 #include <QMouseEvent>
 #include <QApplication>
-
 
 void color_widgets::ReadOnlyColorDelegate::paintItem(
     QPainter* painter,
@@ -40,7 +24,7 @@ void color_widgets::ReadOnlyColorDelegate::paintItem(
         opt.showDecorationSelected = true;
         QStyle *style = widget ? widget->style() : QApplication::style();
         QRect geom = style->subElementRect(QStyle::SE_ItemViewItemText, &opt, widget);
-        opt.text = "";
+        opt.text = QString();
 
         QStyleOptionFrame panel;
         panel.initFrom(option.widget);
@@ -50,11 +34,14 @@ void color_widgets::ReadOnlyColorDelegate::paintItem(
         panel.lineWidth = 2;
         panel.midLineWidth = 0;
         panel.state |= QStyle::State_Sunken;
+        panel.frameShape = QFrame::StyledPanel;
 
-        style->drawControl(QStyle::CE_ItemViewItem, &opt, painter, widget);
+//         style->drawControl(QStyle::CE_ItemViewItem, &opt, painter, widget);
+
+        panel.palette.setBrush(QPalette::Base, brush);
         style->drawPrimitive(QStyle::PE_Frame, &panel, painter, nullptr);
-        QRect r = style->subElementRect(QStyle::SE_FrameContents, &panel, nullptr);
-        painter->fillRect(r, brush);
+//         QRect r = style->subElementRect(QStyle::SE_FrameContents, &panel, nullptr);
+//         painter->fillRect(r, brush);
 }
 
 
@@ -62,7 +49,7 @@ void color_widgets::ReadOnlyColorDelegate::paintItem(
 void color_widgets::ReadOnlyColorDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
                            const QModelIndex &index) const
 {
-    if ( index.data().type() == QVariant::Color )
+    if ( index.data().userType() == QMetaType::QColor )
     {
         paintItem(painter, option, index, index.data().value<QColor>());
     }
@@ -74,8 +61,11 @@ void color_widgets::ReadOnlyColorDelegate::paint(QPainter *painter, const QStyle
 
 QSize color_widgets::ReadOnlyColorDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    if ( index.data().type() == QVariant::Color )
+
+    if ( index.data().userType() == QMetaType::QColor )
+    {
         return size_hint;
+    }
     return QStyledItemDelegate::sizeHint(option, index);
 }
 
@@ -95,7 +85,9 @@ QWidget *color_widgets::ColorDelegate::createEditor(
     const QStyleOptionViewItem &option,
     const QModelIndex &index) const
 {
-    if ( index.data().type() == QVariant::Color )
+
+
+    if ( index.data().userType() == QMetaType::QColor )
     {
         ColorDialog *editor = new ColorDialog(const_cast<QWidget*>(parent));
         connect(editor, &QDialog::accepted, this, &ColorDelegate::close_editor);
@@ -109,19 +101,19 @@ QWidget *color_widgets::ColorDelegate::createEditor(
 void color_widgets::ColorDelegate::color_changed()
 {
     ColorDialog *editor = qobject_cast<ColorDialog*>(sender());
-    emit commitData(editor);
+    Q_EMIT commitData(editor);
 }
 
 void color_widgets::ColorDelegate::close_editor()
 {
     ColorDialog *editor = qobject_cast<ColorDialog*>(sender());
-    emit closeEditor(editor);
+    Q_EMIT closeEditor(editor);
 }
 
 void color_widgets::ColorDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
 {
 
-    if ( index.data().type() == QVariant::Color )
+    if ( index.data().userType() == QMetaType::QColor )
     {
         ColorDialog *selector = qobject_cast<ColorDialog*>(editor);
         selector->setColor(qvariant_cast<QColor>(index.data()));
@@ -134,7 +126,8 @@ void color_widgets::ColorDelegate::setEditorData(QWidget *editor, const QModelIn
 void color_widgets::ColorDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
                                   const QModelIndex &index) const
 {
-    if ( index.data().type() == QVariant::Color )
+
+    if ( index.data().userType() == QMetaType::QColor )
     {
         ColorDialog *selector = qobject_cast<ColorDialog *>(editor);
         model->setData(index, QVariant::fromValue(selector->color()));
@@ -147,7 +140,8 @@ void color_widgets::ColorDelegate::setModelData(QWidget *editor, QAbstractItemMo
 void color_widgets::ColorDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
                                          const QModelIndex &index) const
 {
-    if ( index.data().type() == QVariant::Color )
+
+    if ( index.data().userType() == QMetaType::QColor )
     {
         return;
     }
@@ -163,7 +157,7 @@ bool color_widgets::ColorDelegate::eventFilter(QObject * watched, QEvent * event
     {
         if ( auto editor = qobject_cast<ColorDialog*>(watched) )
         {
-            emit closeEditor(editor, QAbstractItemDelegate::NoHint);
+            Q_EMIT closeEditor(editor, QAbstractItemDelegate::NoHint);
             return false;
         }
     }

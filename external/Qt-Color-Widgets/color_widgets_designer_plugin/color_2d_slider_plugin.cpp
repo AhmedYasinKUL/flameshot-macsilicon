@@ -1,24 +1,9 @@
-/**
- * \file
+/*
+ * SPDX-FileCopyrightText: 2013-2020 Mattia Basaglia
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
+
 #include "color_2d_slider_plugin.hpp"
 #include "QtColorWidgets/color_2d_slider.hpp"
 
@@ -44,12 +29,12 @@ QWidget *Color2DSlider_Plugin::createWidget(QWidget *parent)
 
 QString Color2DSlider_Plugin::name() const
 {
-    return "color_widgets::Color2DSlider";
+    return QStringLiteral("color_widgets::Color2DSlider");
 }
 
 QString Color2DSlider_Plugin::group() const
 {
-    return "Color Widgets";
+    return QStringLiteral("Color Widgets");
 }
 
 QIcon Color2DSlider_Plugin::icon() const
@@ -63,7 +48,7 @@ QIcon Color2DSlider_Plugin::icon() const
 
 QString Color2DSlider_Plugin::toolTip() const
 {
-    return "An analog widget to select 2 color components at the same time";
+    return QStringLiteral("An analog widget to select 2 color components at the same time");
 }
 
 QString Color2DSlider_Plugin::whatsThis() const
@@ -78,13 +63,13 @@ bool Color2DSlider_Plugin::isContainer() const
 
 QString Color2DSlider_Plugin::domXml() const
 {
-    return "<ui language=\"c++\">\n"
-           " <widget class=\"color_widgets::Color2DSlider\" name=\"color2DSlider\">\n"
-           " </widget>\n"
-           "</ui>\n";
+    return QStringLiteral("<ui language=\"c++\">\n"
+                          " <widget class=\"color_widgets::Color2DSlider\" name=\"color2DSlider\">\n"
+                          " </widget>\n"
+                          "</ui>\n");
 }
 
 QString Color2DSlider_Plugin::includeFile() const
 {
-    return "QtColorWidgets/color_2d_slider.hpp";
+    return QStringLiteral("QtColorWidgets/color_2d_slider.hpp");
 }

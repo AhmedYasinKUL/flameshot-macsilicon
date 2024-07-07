@@ -1,24 +1,9 @@
-/**
- * \file
+/*
+ * SPDX-FileCopyrightText: 2013-2020 Mattia Basaglia
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
+
 #ifndef COLOR_DIALOG_HPP
 #define COLOR_DIALOG_HPP
 
@@ -40,6 +25,7 @@ class QCP_EXPORT ColorDialog : public QDialog
     Q_PROPERTY(ColorWheel::ShapeEnum wheelShape READ wheelShape WRITE setWheelShape NOTIFY wheelShapeChanged)
     Q_PROPERTY(ColorWheel::ColorSpaceEnum colorSpace READ colorSpace WRITE setColorSpace NOTIFY colorSpaceChanged)
     Q_PROPERTY(bool wheelRotating READ wheelRotating WRITE setWheelRotating NOTIFY wheelRotatingChanged)
+    Q_PROPERTY(bool wheelMirrored READ wheelMirrored WRITE setWheelMirrored NOTIFY wheelMirroredChanged)
     /**
      * \brief whether the color alpha channel can be edited.
      *
@@ -54,7 +40,7 @@ public:
         Close
     };
 
-    explicit ColorDialog(QWidget *parent = 0, Qt::WindowFlags f = {});
+    explicit ColorDialog(QWidget *parent = nullptr, Qt::WindowFlags f = {});
 
     ~ColorDialog();
 
@@ -91,6 +77,7 @@ public:
     ColorWheel::ShapeEnum wheelShape() const;
     ColorWheel::ColorSpaceEnum colorSpace() const;
     bool wheelRotating() const;
+    bool wheelMirrored() const;
 
     int exec() Q_DECL_OVERRIDE;
 
@@ -109,6 +96,7 @@ public Q_SLOTS:
     void setWheelShape(ColorWheel::ShapeEnum shape);
     void setColorSpace(ColorWheel::ColorSpaceEnum space);
     void setWheelRotating(bool rotating);
+    void setWheelMirrored(bool mirrored);
 
     /**
      * Set whether the color alpha channel can be edited.
@@ -130,6 +118,7 @@ Q_SIGNALS:
     void wheelShapeChanged(ColorWheel::ShapeEnum shape);
     void colorSpaceChanged(ColorWheel::ColorSpaceEnum space);
     void wheelRotatingChanged(bool rotating);
+    void wheelMirroredChanged(bool mirrored);
 
     void alphaEnabledChanged(bool alphaEnabled);
 

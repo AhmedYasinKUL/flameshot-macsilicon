@@ -1,32 +1,19 @@
-/**
- * \file
+/*
+ * SPDX-FileCopyrightText: 2013-2020 Mattia Basaglia
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
+
 #include "QtColorWidgets/color_utils.hpp"
 
 #include <QScreen>
-#include <QDesktopWidget>
 #include <QApplication>
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#include<QDesktopWidget>
+#endif
 
-QColor color_widgets::utils::color_from_lch(qreal hue, qreal chroma, qreal luma, qreal alpha )
+QColor color_widgets::utils::color_from_lch(qt_color_type hue, qt_color_type chroma, qt_color_type luma, qt_color_type alpha )
 {
     qreal h1 = hue*6;
     qreal x = chroma*(1-qAbs(std::fmod(h1,2)-1));
@@ -41,7 +28,7 @@ QColor color_widgets::utils::color_from_lch(qreal hue, qreal chroma, qreal luma,
         col = QColor::fromRgbF(0,x,chroma);
     else if ( h1 < 5 )
         col = QColor::fromRgbF(x,0,chroma);
-    else if ( h1 < 6 )
+    else if ( h1 <= 6 )
         col = QColor::fromRgbF(chroma,0,x);
 
     qreal m = luma - color_lumaF(col);
@@ -53,7 +40,7 @@ QColor color_widgets::utils::color_from_lch(qreal hue, qreal chroma, qreal luma,
         alpha);
 }
 
-QColor color_widgets::utils::color_from_hsl(qreal hue, qreal sat, qreal lig, qreal alpha )
+QColor color_widgets::utils::color_from_hsl(qt_color_type hue, qt_color_type sat, qt_color_type lig, qt_color_type alpha )
 {
     qreal chroma = (1 - qAbs(2*lig-1))*sat;
     qreal h1 = hue*6;
@@ -86,13 +73,23 @@ QColor color_widgets::utils::get_screen_color(const QPoint &global_pos)
 {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
     QScreen *screen = QApplication::screenAt(global_pos);
+    if ( !screen )
+        return QColor();
 #else
     int screenNum = QApplication::desktop()->screenNumber(global_pos);
     QScreen *screen = QApplication::screens().at(screenNum);
 #endif
 
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     WId wid = QApplication::desktop()->winId();
-    QImage img = screen->grabWindow(wid, global_pos.x(), global_pos.y(), 1, 1).toImage();
+    QPoint screen_pos = global_pos;
+#else
+    int wid = 0;
+    QPoint screen_pos = global_pos - screen->geometry().topLeft();
+#endif
+
+    QImage img = screen->grabWindow(wid, screen_pos.x(), screen_pos.y(), 1, 1).toImage();
 
     return img.pixel(0,0);
 }

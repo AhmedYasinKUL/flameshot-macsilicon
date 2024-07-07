@@ -1,24 +1,9 @@
-/**
- * \file
+/*
+ * SPDX-FileCopyrightText: 2013-2020 Mattia Basaglia
  *
- * \author Mattia Basaglia
- *
- * \copyright Copyright (C) 2013-2020 Mattia Basaglia
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
  */
+
 #ifndef COLOR_WIDGETS_SWATCH_HPP
 #define COLOR_WIDGETS_SWATCH_HPP
 
@@ -55,6 +40,11 @@ class QCP_EXPORT Swatch : public QWidget
      * \brief Border around the colors
      */
     Q_PROPERTY(QPen border READ border WRITE setBorder NOTIFY borderChanged)
+
+    /**
+     * \brief Selection rectangle for selected color
+     */
+    Q_PROPERTY(QPen selection READ selectionPen WRITE setSelectionPen)
 
     /**
      * \brief Forces the Swatch to display that many rows of colors
@@ -108,7 +98,7 @@ public:
     };
     Q_ENUMS(ColorSizePolicy)
 
-    Swatch(QWidget* parent = 0);
+    Swatch(QWidget* parent = nullptr);
     ~Swatch();
 
     QSize sizeHint() const Q_DECL_OVERRIDE;
@@ -139,6 +129,7 @@ public:
     QSize maxColorSize() const;
     ColorSizePolicy colorSizePolicy() const;
     QPen border() const;
+    QPen selectionPen() const;
 
     int forcedRows() const;
     int forcedColumns() const;
@@ -150,14 +141,23 @@ public:
 public Q_SLOTS:
     void setPalette(const ColorPalette& palette);
     void setSelected(int selected);
+
+    /**
+     * Sets the given color as selected color.
+     * If the given color is not in the palette, the function returns
+     * false
+     */
+    bool setSelectedColor(const QColor& color);
     void clearSelection();
     void setColorSize(const QSize& colorSize);
     void setMaxColorSize(const QSize& colorSize);
     void setColorSizePolicy(ColorSizePolicy colorSizePolicy);
     void setBorder(const QPen& border);
+    void setSelectionPen(const QPen& selected);
     void setForcedRows(int forcedRows);
     void setForcedColumns(int forcedColumns);
     void setReadOnly(bool readOnly);
+
     /**
      * \brief Remove the currently seleceted color
      **/

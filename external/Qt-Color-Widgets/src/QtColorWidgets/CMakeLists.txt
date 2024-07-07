@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2013-2023 Mattia Basaglia <dev@dragon.best>
+# SPDX-License-Identifier: BSD-2-Clause
+
 set (SOURCES
 abstract_widget_list.cpp
 bound_color_selector.cpp
